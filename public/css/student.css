@@ -1,0 +1,251 @@
+/* Student Dashboard Styles */
+
+.exam-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.exam-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.exam-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.exam-card-header h3 {
+    font-size: 20px;
+    color: var(--text-dark);
+    flex: 1;
+}
+
+.exam-status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.exam-status.available {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.exam-status.upcoming {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.exam-card-body {
+    margin-bottom: 20px;
+}
+
+.exam-card-body p {
+    color: var(--text-light);
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.exam-details {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-dark);
+    font-size: 14px;
+}
+
+.detail-item i {
+    color: var(--primary-color);
+}
+
+.exam-dates {
+    font-size: 12px;
+    color: var(--text-light);
+}
+
+.exam-dates p {
+    margin: 5px 0;
+}
+
+.exam-card-footer {
+    display: flex;
+    gap: 10px;
+}
+
+/* Results Table */
+.results-table-container {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: var(--shadow-md);
+    overflow-x: auto;
+}
+
+/* Attendance */
+.attendance-container {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: var(--shadow-md);
+}
+
+.attendance-stats {
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 15px;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    color: white;
+    box-shadow: var(--shadow-md);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+}
+
+.stat-content h3 {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.stat-detail {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.stat-value.good {
+    color: #10b981;
+}
+
+.stat-value.warning {
+    color: var(--warning-color);
+}
+
+.stat-value.poor {
+    color: var(--danger-color);
+}
+
+.attendance-table-container {
+    margin-top: 20px;
+}
+
+/* Activities */
+.activities-container {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: var(--shadow-md);
+}
+
+.activities-timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.activities-timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border-color);
+}
+
+.activity-item {
+    position: relative;
+    margin-bottom: 25px;
+    padding-left: 20px;
+}
+
+.activity-icon {
+    position: absolute;
+    left: -30px;
+    top: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+    box-shadow: var(--shadow-md);
+}
+
+.activity-icon.primary {
+    background: var(--primary-color);
+}
+
+.activity-icon.success {
+    background: var(--success-color);
+}
+
+.activity-icon.info {
+    background: var(--info-color);
+}
+
+.activity-icon.warning {
+    background: var(--warning-color);
+}
+
+.activity-icon.danger {
+    background: var(--danger-color);
+}
+
+.activity-icon.secondary {
+    background: var(--text-light);
+}
+
+.activity-content {
+    background: var(--light-color);
+    padding: 15px;
+    border-radius: 10px;
+    border-left: 3px solid var(--primary-color);
+}
+
+.activity-content h4 {
+    font-size: 16px;
+    color: var(--text-dark);
+    margin-bottom: 5px;
+}
+
+.activity-time {
+    font-size: 12px;
+    color: var(--text-light);
+}
+

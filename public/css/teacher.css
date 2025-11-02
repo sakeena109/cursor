@@ -1,0 +1,128 @@
+/* Teacher Dashboard Styles */
+
+.question-card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-md);
+    border-left: 4px solid var(--primary-color);
+}
+
+.question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.question-header h4 {
+    font-size: 18px;
+    color: var(--text-dark);
+}
+
+.question-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.question-body {
+    margin-bottom: 15px;
+}
+
+.question-body p {
+    font-size: 16px;
+    color: var(--text-dark);
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.question-options {
+    margin-top: 15px;
+}
+
+.option-item {
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    background: var(--light-color);
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.option-item.correct {
+    background: #d1fae5;
+    border-color: var(--success-color);
+    color: #065f46;
+    font-weight: 600;
+}
+
+.option-item.correct i {
+    color: var(--success-color);
+}
+
+.descriptive-note {
+    padding: 12px;
+    background: #fef3c7;
+    border-radius: 8px;
+    color: #92400e;
+    font-size: 14px;
+    font-style: italic;
+}
+
+.questions-container {
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.questions-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.questions-container::-webkit-scrollbar-track {
+    background: var(--light-color);
+    border-radius: 10px;
+}
+
+.questions-container::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 10px;
+}
+
+/* Copy Link Button Styling */
+.btn-info {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-info:hover {
+    background: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+}
+
+.btn-info i {
+    margin-right: 5px;
+}
+
+/* Attendance Form */
+.attendance-form {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: var(--shadow-md);
+    max-width: 500px;
+}
+
+.attendance-form .form-group {
+    margin-bottom: 20px;
+}
+

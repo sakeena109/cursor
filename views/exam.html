@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taking Exam - Online Exam System</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/exam.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="exam-page">
+    <div id="examContainer" class="exam-container">
+        <div class="loading-screen">
+            <div class="spinner"></div>
+            <p>Loading exam...</p>
+        </div>
+    </div>
+    
+    <script src="/js/auth.js"></script>
+    <script src="/js/antiCheat.js"></script>
+    <script src="/js/exam.js"></script>
+    <script>
+        // Get exam ID from URL
+        const pathParts = window.location.pathname.split('/');
+        const examId = pathParts[pathParts.length - 1];
+        
+        // Check authentication
+        if (!isAuthenticated()) {
+            window.location.href = '/';
+        } else {
+            // Start exam
+            startExam(parseInt(examId));
+        }
+    </script>
+</body>
+</html>
+

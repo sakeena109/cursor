@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Online Exam System</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/student.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-graduation-cap"></i>
+                <span>Online Exam System</span>
+            </div>
+            <div class="nav-menu">
+                <a href="#" onclick="showSection('exams')" class="nav-link active">
+                    <i class="fas fa-file-alt"></i> Exams
+                </a>
+                <a href="#" onclick="showSection('results')" class="nav-link">
+                    <i class="fas fa-chart-bar"></i> Results
+                </a>
+                <a href="#" onclick="showSection('attendance')" class="nav-link">
+                    <i class="fas fa-calendar-check"></i> Attendance
+                </a>
+                <a href="#" onclick="showSection('activities')" class="nav-link">
+                    <i class="fas fa-history"></i> Activities
+                </a>
+                <a href="#" onclick="logout()" class="nav-link">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>Welcome, <span id="userName"></span></h1>
+            <p>Student Dashboard</p>
+        </div>
+        
+        <!-- Exams Section -->
+        <div id="exams" class="dashboard-section active">
+            <div class="section-header">
+                <h2><i class="fas fa-file-alt"></i> Available Exams</h2>
+            </div>
+            <div class="cards-grid" id="examsGrid">
+                <div class="loading">Loading exams...</div>
+            </div>
+        </div>
+        
+        <!-- Results Section -->
+        <div id="results" class="dashboard-section">
+            <div class="section-header">
+                <h2><i class="fas fa-chart-bar"></i> Exam Results</h2>
+            </div>
+            <div class="results-table-container">
+                <table class="results-table" id="resultsTable">
+                    <thead>
+                        <tr>
+                            <th>Exam</th>
+                            <th>Score</th>
+                            <th>Percentage</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="6" class="loading">Loading results...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Attendance Section -->
+        <div id="attendance" class="dashboard-section">
+            <div class="section-header">
+                <h2><i class="fas fa-calendar-check"></i> Attendance</h2>
+            </div>
+            <div class="attendance-container">
+                <div class="attendance-stats" id="attendanceStats"></div>
+                <div class="attendance-table-container">
+                    <table class="attendance-table" id="attendanceTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Course</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="3" class="loading">Loading attendance...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Activities Section -->
+        <div id="activities" class="dashboard-section">
+            <div class="section-header">
+                <h2><i class="fas fa-history"></i> Daily Activities</h2>
+            </div>
+            <div class="activities-container" id="activitiesContainer">
+                <div class="loading">Loading activities...</div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/js/auth.js"></script>
+    <script src="/js/activities.js"></script>
+    <script src="/js/attendance.js"></script>
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>
+
