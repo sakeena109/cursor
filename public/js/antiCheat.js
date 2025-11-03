@@ -12,16 +12,49 @@ function initAntiCheat(examSessionId) {
     violationCount = 0;
     warnings = 0;
     
+    // Prevent page reload/close
+    window.addEventListener('beforeunload', (e) => {
+        e.preventDefault();
+        e.returnValue = 'You are currently taking an exam. Are you sure you want to leave? This will be recorded as a violation.';
+        logViolation('page_unload_attempt', { timestamp: new Date().toISOString() });
+        return e.returnValue;
+    });
+    
+    // Prevent leaving page
+    window.addEventListener('unload', () => {
+        if (sessionId) {
+            // Mark session as disqualified if leaving
+            fetch('/api/exam/disqualify-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getAuthToken()}`
+                },
+                body: JSON.stringify({ session_id: sessionId, reason: 'Page closed/unloaded' })
+            }).catch(() => {});
+        }
+    });
+    
     // Disable right-click
     document.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         logViolation('right_click', { timestamp: new Date().toISOString() });
         showWarning('Right-click is disabled during exam');
+        violationCount++;
+        if (violationCount >= MAX_VIOLATIONS) {
+            disqualifyStudent('Too many violations detected');
+        }
         return false;
     });
     
     // Disable text selection
     document.addEventListener('selectstart', (e) => {
+        e.preventDefault();
+        return false;
+    });
+    
+    // Disable drag
+    document.addEventListener('dragstart', (e) => {
         e.preventDefault();
         return false;
     });
@@ -83,36 +116,80 @@ function initAntiCheat(examSessionId) {
         }
     });
     
-    // Tab/window focus detection
+    // Tab/window focus detection - STRICT MODE
     let lastFocusTime = Date.now();
     let focusCheckInterval;
+    let tabSwitchCount = 0;
+    let blurTime = null;
     
     const checkFocus = () => {
         if (!document.hasFocus()) {
-            logViolation('tab_switch', { 
-                timestamp: new Date().toISOString(),
-                duration: Date.now() - lastFocusTime
-            });
-            showWarning('You have switched tabs or minimized the window. This is not allowed.');
-            
-            violationCount++;
-            if (violationCount >= MAX_VIOLATIONS) {
-                disqualifyStudent('Exceeded maximum tab switch violations');
+            if (!blurTime) {
+                blurTime = Date.now();
+                logViolation('tab_switch', { 
+                    timestamp: new Date().toISOString(),
+                    duration: Date.now() - lastFocusTime
+                });
+                tabSwitchCount++;
+                showWarning(`⚠️ WARNING ${tabSwitchCount}: You switched tabs! This is being monitored. Return immediately or risk disqualification.`);
+                
+                violationCount++;
+                
+                // Auto-disqualify after 3 tab switches
+                if (tabSwitchCount >= MAX_VIOLATIONS) {
+                    disqualifyStudent(`Disqualified: ${tabSwitchCount} tab switches detected`);
+                }
             }
+        } else {
+            if (blurTime) {
+                const timeAway = Date.now() - blurTime;
+                logViolation('tab_return', {
+                    timestamp: new Date().toISOString(),
+                    time_away: timeAway
+                });
+                blurTime = null;
+            }
+            lastFocusTime = Date.now();
         }
-        lastFocusTime = Date.now();
     };
     
-    focusCheckInterval = setInterval(checkFocus, 1000);
+    // Check every 500ms for faster detection
+    focusCheckInterval = setInterval(checkFocus, 500);
     
+    // Visibility change detection
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
             logViolation('window_minimized', { timestamp: new Date().toISOString() });
-            showWarning('Window was minimized. Please return to the exam.');
+            showWarning('⚠️ WARNING: Window was minimized or tab was switched!');
             violationCount++;
-            if (violationCount >= MAX_VIOLATIONS) {
-                disqualifyStudent('Exceeded maximum window violations');
+            tabSwitchCount++;
+            if (violationCount >= MAX_VIOLATIONS || tabSwitchCount >= MAX_VIOLATIONS) {
+                disqualifyStudent('Exceeded maximum violations - window minimized/tab switched');
             }
+        } else {
+            logViolation('window_restored', { timestamp: new Date().toISOString() });
+        }
+    });
+    
+    // Blur event (when window loses focus)
+    window.addEventListener('blur', () => {
+        logViolation('window_blur', { timestamp: new Date().toISOString() });
+        violationCount++;
+        tabSwitchCount++;
+        if (tabSwitchCount >= MAX_VIOLATIONS) {
+            disqualifyStudent('Too many focus losses detected');
+        }
+    });
+    
+    // Focus event
+    window.addEventListener('focus', () => {
+        if (blurTime) {
+            const timeAway = Date.now() - blurTime;
+            logViolation('window_focus', {
+                timestamp: new Date().toISOString(),
+                time_away: timeAway
+            });
+            blurTime = null;
         }
     });
     
@@ -194,26 +271,57 @@ function createWarningDiv() {
 }
 
 // Disqualify student
-function disqualifyStudent(reason) {
+async function disqualifyStudent(reason) {
     clearInterval(window.antiCheatInterval);
     
-    // Show disqualification message
+    // Log disqualification to server
+    if (sessionId) {
+        try {
+            await fetch('/api/exam/disqualify-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getAuthToken()}`
+                },
+                body: JSON.stringify({
+                    session_id: sessionId,
+                    reason: reason
+                })
+            });
+        } catch (error) {
+            console.error('Error reporting disqualification:', error);
+        }
+    }
+    
+    // Show disqualification message - BLOCKING
     const modal = document.createElement('div');
     modal.className = 'disqualification-modal';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10000; display: flex; align-items: center; justify-content: center;';
     modal.innerHTML = `
-        <div class="modal-content">
-            <h2>⚠️ Exam Disqualified</h2>
-            <p>${reason}</p>
-            <p>Your exam has been automatically submitted due to violations.</p>
-            <button onclick="window.location.href='/dashboard'">Return to Dashboard</button>
+        <div class="modal-content" style="background: white; padding: 40px; border-radius: 15px; text-align: center; max-width: 500px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+            <div style="font-size: 60px; color: #ef4444; margin-bottom: 20px;">⚠️</div>
+            <h2 style="color: #ef4444; margin-bottom: 20px; font-size: 28px;">Exam Disqualified</h2>
+            <p style="font-size: 18px; margin-bottom: 15px; color: #1f2937;"><strong>Reason:</strong> ${reason}</p>
+            <p style="font-size: 16px; margin-bottom: 30px; color: #6b7280;">Your exam has been automatically submitted due to multiple violations.</p>
+            <p style="font-size: 14px; margin-bottom: 30px; color: #ef4444; font-weight: 600;">All violations have been logged and reported to your administrator.</p>
+            <button onclick="window.location.href='/dashboard'" style="padding: 15px 30px; background: #667eea; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer;">Return to Dashboard</button>
         </div>
     `;
     document.body.appendChild(modal);
     
+    // Prevent any interaction
+    document.body.style.pointerEvents = 'none';
+    modal.style.pointerEvents = 'auto';
+    
     // Auto-submit exam
     if (sessionId && window.submitExam) {
-        window.submitExam(sessionId);
+        setTimeout(() => {
+            window.submitExam(sessionId);
+        }, 2000);
     }
+    
+    // Remove beforeunload listener to allow navigation
+    window.removeEventListener('beforeunload', () => {});
 }
 
 // Cleanup on page unload

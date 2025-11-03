@@ -299,10 +299,70 @@ router.post('/log-violation', authenticate, authorize('student'), async (req, re
     );
 
     const violationCount = violations[0].count;
+    
+    // Auto-disqualify if violations exceed limit
+    if (violationCount >= 3) {
+      await pool.execute(
+        'UPDATE exam_sessions SET status = "disqualified" WHERE id = ?',
+        [session_id]
+      );
+    }
 
     res.json({
       success: true,
-      violationCount
+      violationCount,
+      disqualified: violationCount >= 3
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// Disqualify session
+router.post('/disqualify-session', authenticate, authorize('student'), async (req, res) => {
+  try {
+    const { session_id, reason } = req.body;
+    const studentId = req.user.id;
+
+    // Verify session
+    const [sessions] = await pool.execute(
+      'SELECT * FROM exam_sessions WHERE id = ? AND student_id = ?',
+      [session_id, studentId]
+    );
+
+    if (sessions.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Session not found'
+      });
+    }
+
+    // Mark as disqualified
+    await pool.execute(
+      'UPDATE exam_sessions SET status = "disqualified", end_time = NOW() WHERE id = ?',
+      [session_id]
+    );
+    
+    // Log final violation
+    await pool.execute(
+      'INSERT INTO anti_cheat_logs (session_id, violation_type, details, timestamp) VALUES (?, ?, ?, NOW())',
+      [session_id, 'disqualified', JSON.stringify({ reason })]
+    );
+    
+    // Log activity
+    await Activity.create({
+      user_id: studentId,
+      activity_type: 'exam_disqualified',
+      description: `Exam disqualified: ${reason}`,
+      metadata: { session_id, reason }
+    });
+
+    res.json({
+      success: true,
+      message: 'Session disqualified'
     });
   } catch (error) {
     res.status(500).json({

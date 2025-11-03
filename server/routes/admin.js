@@ -1,5 +1,7 @@
 const express = require('express');
 const User = require('../models/User');
+const Exam = require('../models/Exam');
+const Question = require('../models/Question');
 const { authenticate, authorize } = require('../middleware/auth');
 const Activity = require('../models/Activity');
 const pool = require('../config/database');
@@ -175,6 +177,261 @@ router.get('/stats', authenticate, authorize('admin'), async (req, res) => {
         results: resultStats[0],
         activities: activityStats
       }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// Create exam (Admin)
+router.post('/exams', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    // Admin can assign exam to any teacher or themselves
+    const teacherId = req.body.teacher_id || req.user.id;
+    
+    const examData = {
+      ...req.body,
+      teacher_id: teacherId
+    };
+
+    const examId = await Exam.create(examData);
+
+    await Activity.create({
+      user_id: req.user.id,
+      activity_type: 'exam_created',
+      description: `Admin created exam: ${req.body.title}`,
+      metadata: { exam_id: examId }
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Exam created successfully',
+      examId
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// Update exam (Admin)
+router.put('/exams/:id', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    await Exam.update(req.params.id, req.body);
+    
+    await Activity.create({
+      user_id: req.user.id,
+      activity_type: 'exam_updated',
+      description: `Admin updated exam: ${req.params.id}`,
+      metadata: { exam_id: req.params.id }
+    });
+
+    res.json({
+      success: true,
+      message: 'Exam updated successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// Delete exam (Admin)
+router.delete('/exams/:id', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    await Question.deleteByExamId(req.params.id);
+    await Exam.delete(req.params.id);
+    
+    await Activity.create({
+      user_id: req.user.id,
+      activity_type: 'exam_deleted',
+      description: `Admin deleted exam: ${req.params.id}`,
+      metadata: { exam_id: req.params.id }
+    });
+
+    res.json({
+      success: true,
+      message: 'Exam deleted successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// Add question to exam (Admin)
+router.post('/exams/:examId/questions', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    const questionData = {
+      ...req.body,
+      exam_id: req.params.examId
+    };
+
+    const questionId = await Question.create(questionData);
+    
+    res.status(201).json({
+      success: true,
+      message: 'Question added successfully',
+      questionId
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// Get exam questions (Admin)
+router.get('/exams/:examId/questions', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    const questions = await Question.findByExamId(req.params.examId);
+    res.json({
+      success: true,
+      questions
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// Update question (Admin)
+router.put('/questions/:id', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    await Question.update(req.params.id, req.body);
+    res.json({
+      success: true,
+      message: 'Question updated successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// Delete question (Admin)
+router.delete('/questions/:id', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    await Question.delete(req.params.id);
+    res.json({
+      success: true,
+      message: 'Question deleted successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// Get all anti-cheat violations
+router.get('/violations', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    const [violations] = await pool.execute(
+      `SELECT 
+        acl.*,
+        es.exam_id,
+        es.student_id,
+        e.title as exam_title,
+        u.name as student_name,
+        u.email as student_email
+       FROM anti_cheat_logs acl
+       JOIN exam_sessions es ON acl.session_id = es.id
+       JOIN exams e ON es.exam_id = e.id
+       JOIN users u ON es.student_id = u.id
+       ORDER BY acl.timestamp DESC
+       LIMIT 500`
+    );
+    
+    const formattedViolations = violations.map(v => ({
+      ...v,
+      details: JSON.parse(v.details || '{}')
+    }));
+    
+    res.json({
+      success: true,
+      violations: formattedViolations
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// Get violations by session
+router.get('/violations/session/:sessionId', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    const [violations] = await pool.execute(
+      `SELECT 
+        acl.*,
+        es.exam_id,
+        es.student_id,
+        e.title as exam_title,
+        u.name as student_name,
+        u.email as student_email
+       FROM anti_cheat_logs acl
+       JOIN exam_sessions es ON acl.session_id = es.id
+       JOIN exams e ON es.exam_id = e.id
+       JOIN users u ON es.student_id = u.id
+       WHERE acl.session_id = ?
+       ORDER BY acl.timestamp DESC`,
+      [req.params.sessionId]
+    );
+    
+    const formattedViolations = violations.map(v => ({
+      ...v,
+      details: JSON.parse(v.details || '{}')
+    }));
+    
+    res.json({
+      success: true,
+      violations: formattedViolations
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// Get disqualified sessions
+router.get('/disqualified', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    const [sessions] = await pool.execute(
+      `SELECT 
+        es.*,
+        e.title as exam_title,
+        u.name as student_name,
+        u.email as student_email,
+        (SELECT COUNT(*) FROM anti_cheat_logs WHERE session_id = es.id) as violation_count
+       FROM exam_sessions es
+       JOIN exams e ON es.exam_id = e.id
+       JOIN users u ON es.student_id = u.id
+       WHERE es.status = 'disqualified'
+       ORDER BY es.end_time DESC`
+    );
+    
+    res.json({
+      success: true,
+      sessions
     });
   } catch (error) {
     res.status(500).json({

@@ -254,6 +254,21 @@ textarea[name="answer"] {
 
 .warning-message.show {
     display: block;
+    animation: pulse-warning 0.5s ease-out;
+    font-weight: 600;
+    border: 2px solid #d97706;
+}
+
+@keyframes pulse-warning {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
 }
 
 /* Disqualification Modal */
